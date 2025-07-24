@@ -20,9 +20,10 @@ jobs:
 
     - name: Debug - Check secret format
       run: |
-        echo "Secret length: ${{#GCP_SA_KEY}}"
-        echo "First 20 chars: ${{GCP_SA_KEY:0:20}}"
-        echo "First char ASCII: $(printf '%d' "'${{GCP_SA_KEY:0:1}}")"
+        echo "GCP_SA_KEY exists"
+        echo "$GCP_SA_KEY" | head -c 50
+        echo ""
+        echo "$GCP_SA_KEY" | wc -c
       env:
         GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
 
