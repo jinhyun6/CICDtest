@@ -50,4 +50,28 @@ jobs:
           --image gcr.io/$PROJECT_ID/$SERVICE_NAME_LOWER:${{ github.sha }} \
           --region $REGION \
           --platform managed \
-          --allow-unauthenticated
+          --allow-unauthenticated \
+          --format json > deployment-output.json
+        
+        # Extract service URL
+        SERVICE_URL=$(cat deployment-output.json | jq -r '.status.url')
+        echo "SERVICE_URL=$SERVICE_URL" >> $GITHUB_ENV
+        echo "🚀 Deployed to: $SERVICE_URL"
+    
+    - name: Update deployment status
+      if: always()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const status = '${{ job.status }}';
+          const serviceUrl = '${{ env.SERVICE_URL }}';
+          
+          await github.rest.repos.createCommitStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            sha: context.sha,
+            state: status === 'success' ? 'success' : 'failure',
+            target_url: serviceUrl || '',
+            description: status === 'success' ? `Deployed to ${serviceUrl}` : 'Deployment failed',
+            context: 'Cloud Run Deployment'
+          })
