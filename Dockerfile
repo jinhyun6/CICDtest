@@ -1,8 +1,17 @@
-FROM nginx:alpine
-RUN echo "<h1>CI/CD Test Success!</h1>" > /usr/share/nginx/html/index.html
+# Auto-generated Dockerfile
+FROM node:16-alpine
 
-# Cloud Run은 PORT 환경변수를 사용
-RUN echo 'server { listen 8080; location / { root /usr/share/nginx/html; } }' > /etc/nginx/conf.d/default.conf
+WORKDIR /app
 
+# Copy package files
+COPY package*.json ./
+RUN npm install --production || echo "No package.json found"
+
+# Copy application files
+COPY . .
+
+# Expose port
 EXPOSE 8080
-CMD ["nginx", "-g", "daemon off;"]
+
+# Start command
+CMD ["npm", "start"] || ["node", "index.js"] || ["python", "app.py"] || ["echo", "No start command found"]
