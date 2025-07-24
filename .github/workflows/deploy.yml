@@ -5,6 +5,11 @@ on:
     branches:
       - main
 
+env:
+  PROJECT_ID: cicdai-466905
+  SERVICE_NAME: CICDtest
+  REGION: asia-northeast3
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -12,15 +17,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-
-    - name: Debug - Check secret format
-      run: |
-        echo "GCP_SA_KEY exists"
-        echo "$GCP_SA_KEY" | head -c 50
-        echo ""
-        echo "$GCP_SA_KEY" | wc -c
-      env:
-        GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
 
     - name: Authenticate to Google Cloud
       uses: google-github-actions/auth@v1
@@ -36,30 +32,14 @@ jobs:
 
     - name: Build Docker image
       run: |
-        # Secret 마스킹 우회
-        PROJECT_ID=$(echo "${{ secrets.GCP_PROJECT_ID }}" | sed 's/^.//;s/.$//')
-        PROJECT_ID="${{ secrets.GCP_PROJECT_ID[0] }}${PROJECT_ID}${{ secrets.GCP_PROJECT_ID[-1] }}"
-        SERVICE_NAME=$(echo "${{ secrets.GCP_SERVICE_NAME }}" | sed 's/^.//;s/.$//')  
-        SERVICE_NAME="${{ secrets.GCP_SERVICE_NAME[0] }}${SERVICE_NAME}${{ secrets.GCP_SERVICE_NAME[-1] }}"
-        
-        # 또는 더 간단한 방법: base64 인코딩/디코딩
-        PROJECT_ID=$(echo "${{ secrets.GCP_PROJECT_ID }}" | base64 -w 0 | base64 -d)
-        SERVICE_NAME=$(echo "${{ secrets.GCP_SERVICE_NAME }}" | base64 -w 0 | base64 -d)
-        
-        echo "Building image: gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ github.sha }}"
         docker build -t gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ github.sha }} .
 
     - name: Push Docker image
       run: |
-        PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
-        SERVICE_NAME="${{ secrets.GCP_SERVICE_NAME }}"
         docker push gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ github.sha }}
 
     - name: Deploy to Cloud Run
       run: |
-        PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
-        SERVICE_NAME="${{ secrets.GCP_SERVICE_NAME }}"
-        REGION="${{ secrets.GCP_REGION }}"
         gcloud run deploy $SERVICE_NAME \
           --image gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ github.sha }} \
           --region $REGION \
