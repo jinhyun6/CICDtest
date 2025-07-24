@@ -1,17 +1,24 @@
-# Auto-generated Dockerfile
-FROM node:16-alpine
+FROM python:3.9-slim
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-RUN npm install --production || echo "No package.json found"
+RUN pip install Flask
 
-# Copy application files
-COPY . .
+RUN cat > app.py << 'EOF'
+from flask import Flask
+import os
 
-# Expose port
+app = Flask(__name__)
+
+@app.route('/')
+def hello():
+    return '<h1>🎉 CI/CD Success! Your app is deployed on Cloud Run!</h1>'
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port)
+EOF
+
 EXPOSE 8080
 
-# Start command
-CMD ["npm", "start"] || ["node", "index.js"] || ["python", "app.py"] || ["echo", "No start command found"]
+CMD ["python", "app.py"]
