@@ -5,7 +5,8 @@ on:
     branches:
       - main
     paths-ignore:
-      - '.github/workflows/**'  # workflow 파일 변경은 무시
+      - '.github/workflows/**'
+  workflow_dispatch:  # 수동 실행 가능
 
 env:
   PROJECT_ID: cicdai-466905
